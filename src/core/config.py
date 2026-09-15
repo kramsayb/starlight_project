@@ -12,6 +12,7 @@ class Settings(BaseSettings):
     log_level: str
 
     database_url: PostgresDsn
+    database_pool_size: int = 20
     celery_broker_url: AmqpDsn
     celery_result_backend: RedisDsn
     redis_url: RedisDsn
