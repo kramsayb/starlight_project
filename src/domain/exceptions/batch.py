@@ -1,0 +1,2 @@
+class BatchAlreadyExistsError(Exception):
+    pass
