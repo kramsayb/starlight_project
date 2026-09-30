@@ -66,7 +66,7 @@ class BatchService:
     ) -> Batch:
         existing = await self.repository.get_by_number_and_date(batch_number, batch_date)
         if existing is not None:
-            raise BatchAlreadyExistsError()
+            raise BatchAlreadyExistsError(f"Batch {batch_number} from {batch_date} already exists")
         work_center = await self.work_center_repository.get_by_identifier(work_center_identifier)
         if work_center is None:
             work_center = WorkCenter(identifier=work_center_identifier, name=work_center_name)
