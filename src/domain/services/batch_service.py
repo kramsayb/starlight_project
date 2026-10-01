@@ -20,7 +20,7 @@ class BatchService:
     async def update_batch(
         self, batch_id: int, is_closed: bool | None, **other_fields
     ) -> Batch | None:
-        batch = await self.repository.get_by_id(batch_id)
+        batch = await self.repository.get_with_products(batch_id)
         if batch is None:
             return None
 

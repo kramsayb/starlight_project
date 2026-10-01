@@ -27,7 +27,7 @@ class BatchRepository(BaseRepository[Batch]):
         offset: int = 0,
         limit: int = 20,
     ) -> Sequence[Batch]:
-        stmt = select(Batch)
+        stmt = select(Batch).options(selectinload(Batch.products))
 
         conditions = []
 
