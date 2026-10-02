@@ -3,9 +3,11 @@ from datetime import date
 from fastapi import APIRouter, Depends, HTTPException, Query
 
 from src.api.v1.schemas.batch import BatchRead, BatchCreate, BatchUpdate
-from src.core.dependencies import get_batch_service
+from src.core.dependencies import get_batch_service, get_product_service
 from src.domain.exceptions import BatchAlreadyExistsError
 from src.domain.services.batch_service import BatchService
+from src.domain.services.product_service import ProductService
+from src.api.v1.schemas.product import AggregateRequest, AggregateResult
 
 router = APIRouter(prefix="/batches", tags=["batches"])
 
@@ -46,14 +48,14 @@ async def update_batch(
 
 @router.get("", response_model=list[BatchRead])
 async def list_batches(
-    is_closed: bool | None = None,
-    batch_number: int | None = None,
-    batch_date: date | None = None,
-    work_center_id: int | None = None,
-    shift: str | None = None,
-    offset: int = Query(0, ge=0),
-    limit: int = Query(20, ge=1, le=100),
-    service: BatchService = Depends(get_batch_service),
+        is_closed: bool | None = None,
+        batch_number: int | None = None,
+        batch_date: date | None = None,
+        work_center_id: int | None = None,
+        shift: str | None = None,
+        offset: int = Query(0, ge=0),
+        limit: int = Query(20, ge=1, le=100),
+        service: BatchService = Depends(get_batch_service),
 ):
     batches = await service.list_batches(
         is_closed=is_closed,
@@ -65,3 +67,15 @@ async def list_batches(
         limit=limit,
     )
     return batches
+
+
+@router.post("/{batch_id}/aggregate", response_model=AggregateResult)
+async def aggregate_products(
+        batch_id: int,
+        data: AggregateRequest,
+        service: ProductService = Depends(get_product_service),
+):
+    result = await service.aggregate_products(batch_id, data.unique_codes)
+    if result is None:
+        raise HTTPException(status_code=404, detail="Batch not found")
+    return result
