@@ -1,7 +1,9 @@
 from datetime import datetime, timezone
 
+from src.data.models import Product
 from src.data.repositories.batch_repository import BatchRepository
 from src.data.repositories.product_repository import ProductRepository
+from src.domain.exceptions import ProductAlreadyExistsError
 
 
 class ProductService:
@@ -35,3 +37,15 @@ class ProductService:
                 "aggregated": aggregated,
                 "failed": failed,
                 "errors": errors}
+
+    async def create_product(self, unique_code: str, batch_id: int) -> Product | None:
+        batch = await self.batch_repository.get_by_id(batch_id)
+        if batch is None:
+            return None
+        existing = await self.repository.get_by_unique_code(unique_code)
+        if existing is not None:
+            raise ProductAlreadyExistsError(f"Product with code {unique_code} already exists")
+        product = Product(unique_code=unique_code, batch_id=batch_id)
+        await self.repository.create(product)
+        return product
+

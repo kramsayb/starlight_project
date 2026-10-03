@@ -16,3 +16,8 @@ class AggregateResult(BaseModel):
     aggregated: int
     failed: int
     errors: list[AggregationError]
+
+
+class ProductCreate(BaseModel):
+    unique_code: str
+    batch_id: int

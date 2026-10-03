@@ -9,6 +9,7 @@ from src.domain.services.batch_service import BatchService
 from src.domain.services.product_service import ProductService
 from src.api.v1.schemas.product import AggregateRequest, AggregateResult
 
+
 router = APIRouter(prefix="/batches", tags=["batches"])
 
 

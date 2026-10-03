@@ -1,1 +1,2 @@
 from src.domain.exceptions.batch import BatchAlreadyExistsError
+from src.domain.exceptions.product import ProductAlreadyExistsError
