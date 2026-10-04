@@ -38,6 +38,7 @@ class ProductService:
                 "failed": failed,
                 "errors": errors}
 
+
     async def create_product(self, unique_code: str, batch_id: int) -> Product | None:
         batch = await self.batch_repository.get_by_id(batch_id)
         if batch is None:

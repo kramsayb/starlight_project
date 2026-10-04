@@ -1,5 +1,7 @@
+from contextlib import asynccontextmanager
 from typing import AsyncGenerator
 
+from sqlalchemy import NullPool
 from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, AsyncSession
 from sqlalchemy.orm import DeclarativeBase
 
@@ -33,5 +35,27 @@ async def get_db() -> AsyncGenerator[AsyncSession, None]:
         finally:
             await session.close()
 
+
 async def dispose_engine() -> None:
     await engine.dispose()
+
+
+@asynccontextmanager
+async def worker_session() -> AsyncGenerator[AsyncSession, None]:
+    worker_engine = create_async_engine(
+        str(settings.database_url),
+        poolclass=NullPool,
+        echo=settings.debug,
+    )
+    try:
+        session_maker = async_sessionmaker(worker_engine, expire_on_commit=False)
+        async with session_maker() as session:
+            try:
+                yield session
+            except Exception:
+                await session.rollback()
+                raise
+            else:
+                await session.commit()
+    finally:
+        await worker_engine.dispose()
