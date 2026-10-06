@@ -3,11 +3,13 @@ from datetime import date
 from fastapi import APIRouter, Depends, HTTPException, Query
 
 from src.api.v1.schemas.batch import BatchRead, BatchCreate, BatchUpdate
+from src.api.v1.schemas.task import TaskAccepted
 from src.core.dependencies import get_batch_service, get_product_service
 from src.domain.exceptions import BatchAlreadyExistsError
 from src.domain.services.batch_service import BatchService
 from src.domain.services.product_service import ProductService
 from src.api.v1.schemas.product import AggregateRequest, AggregateResult
+from src.tasks.aggregation import aggregate_products_batch
 
 
 router = APIRouter(prefix="/batches", tags=["batches"])
@@ -80,3 +82,16 @@ async def aggregate_products(
     if result is None:
         raise HTTPException(status_code=404, detail="Batch not found")
     return result
+
+
+@router.post("/{batch_id}/aggregate-async", response_model=TaskAccepted, status_code=202)
+async def aggregate_products_async(
+        batch_id: int,
+        data: AggregateRequest,
+):
+    task = aggregate_products_batch.delay(batch_id, data.unique_codes)
+    return {
+        "task_id": task.id,
+        "status": "PENDING",
+        "message": "Aggregation task started"
+    }
