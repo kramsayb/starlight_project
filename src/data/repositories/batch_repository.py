@@ -14,7 +14,7 @@ class BatchRepository(BaseRepository[Batch]):
         super().__init__(session, Batch)
 
     async def get_with_products(self, batch_id: int) -> Batch | None:
-        stmt = select(Batch).where(Batch.id == batch_id).options(selectinload(Batch.products))
+        stmt = select(Batch).where(Batch.id == batch_id).options(selectinload(Batch.products), selectinload(Batch.work_center))
         result = await self.session.execute(stmt)
         return result.scalar_one_or_none()
 

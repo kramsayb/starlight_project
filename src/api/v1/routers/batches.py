@@ -2,15 +2,15 @@ from datetime import date
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 
-from src.api.v1.schemas.batch import BatchRead, BatchCreate, BatchUpdate
-from src.api.v1.schemas.task import TaskAccepted
+from src.api.v1.schemas.batch import BatchRead, BatchCreate, BatchUpdate, ReportRequest
+from src.api.v1.schemas.task import TaskAccepted, ReportTaskAccepted
 from src.core.dependencies import get_batch_service, get_product_service
 from src.domain.exceptions import BatchAlreadyExistsError
 from src.domain.services.batch_service import BatchService
 from src.domain.services.product_service import ProductService
 from src.api.v1.schemas.product import AggregateRequest, AggregateResult
 from src.tasks.aggregation import aggregate_products_batch
-
+from src.tasks.reports import generate_batch_report
 
 router = APIRouter(prefix="/batches", tags=["batches"])
 
@@ -94,4 +94,20 @@ async def aggregate_products_async(
         "task_id": task.id,
         "status": "PENDING",
         "message": "Aggregation task started"
+    }
+
+
+@router.post("/{batch_id}/reports", response_model=ReportTaskAccepted, status_code=202)
+async def report_batches(
+        batch_id: int,
+        data: ReportRequest,
+        service: BatchService = Depends(get_batch_service),
+):
+    batch = await service.get_batch(batch_id)
+    if batch is None:
+        raise HTTPException(status_code=404, detail="Batch not found")
+    task = generate_batch_report.delay(batch_id, data.format, data.email)
+    return {
+        "task_id": task.id,
+        "status": "PENDING",
     }

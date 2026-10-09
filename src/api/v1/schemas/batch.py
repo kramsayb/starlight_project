@@ -1,6 +1,6 @@
 from datetime import date, datetime
-
-from pydantic import BaseModel, ConfigDict, Field
+from typing import Literal
+from pydantic import BaseModel, ConfigDict, Field, EmailStr
 
 
 class ProductRead(BaseModel):
@@ -49,3 +49,8 @@ class BatchCreate(BaseModel):
     work_center_identifier: str = Field(alias="ИдентификаторРЦ")
     shift_start: datetime = Field(alias="ДатаВремяНачалаСмены")
     shift_end: datetime = Field(alias="ДатаВремяОкончанияСмены")
+
+
+class ReportRequest(BaseModel):
+    format: Literal["excel", "pdf"] = "excel"
+    email: EmailStr | None = None
