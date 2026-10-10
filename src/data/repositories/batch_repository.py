@@ -1,11 +1,11 @@
 from datetime import date
 from typing import Sequence
 
-from sqlalchemy import select
+from sqlalchemy import select, func
 from sqlalchemy.orm import selectinload
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.data.models import Batch
+from src.data.models import Batch, Product
 from src.data.repositories.base_repository import BaseRepository
 
 
@@ -54,4 +54,13 @@ class BatchRepository(BaseRepository[Batch]):
         stmt = select(Batch).where(Batch.batch_number == batch_number).where(Batch.batch_date == batch_date)
         result = await self.session.execute(stmt)
         return result.scalar_one_or_none()
+
+    async def count_products(self, batch_id: int) -> tuple[int, int]:
+        stmt = select(
+            func.count(Product.id),
+            func.count(Product.id).filter(Product.is_aggregated.is_(True)),
+        ).where(Product.batch_id == batch_id)
+        result = await self.session.execute(stmt)
+        total, aggregated = result.one()
+        return total, aggregated
 

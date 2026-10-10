@@ -11,11 +11,12 @@ def _excel_date(dt: datetime | None) -> datetime | None:
     return dt.astimezone().replace(tzinfo=None)
 
 
-def excel_generator(batch: Batch, file_path: str) -> None:
+def excel_generator(batch: Batch, stats: dict, file_path: str) -> None:
     wb = Workbook()
     ws = wb.active
     ws.title = "Информация о партии"
     ws2 = wb.create_sheet("Продукция")
+    ws3 = wb.create_sheet("Статистика")
     ws.append(["Номер партии", batch.batch_number])
     ws.append(["Дата партии", batch.batch_date])
     ws.append(["Статус", "Закрыта" if batch.is_closed else "Открыта"])
@@ -33,5 +34,9 @@ def excel_generator(batch: Batch, file_path: str) -> None:
             'Да' if product.is_aggregated else 'Нет',
             _excel_date(product.aggregated_at) if product.aggregated_at else '-'
         ])
-
+    ws3.append(["Всего продукции", stats["total"]])
+    ws3.append(["Агрегировано", stats["aggregated"]])
+    ws3.append(["Осталось", stats["remaining"]])
+    ws3.append(["Процент выполнения", f"{stats['percent']}%"])
+    ws3.append(["Средняя скорость", f"{stats['rate_per_hour']} ед/час"])
     wb.save(file_path)

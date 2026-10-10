@@ -79,3 +79,26 @@ class BatchService:
         )
         await self.repository.create(batch)
         return batch
+
+    async def get_batch_statistics(self, batch_id: int) -> dict | None:
+        batch = await self.repository.get_by_id(batch_id)
+        if batch is None:
+            return None
+
+        total, aggregated = await self.repository.count_products(batch_id)
+        remaining = total - aggregated
+        percent = round(aggregated * 100 / total, 2) if total else 0.0
+
+        now = datetime.now(timezone.utc)
+        end = batch.closed_at if batch.is_closed and batch.closed_at else now
+        end = min(end, batch.shift_end)
+        hours = (end - batch.shift_start).total_seconds() / 3600
+        rate = round(aggregated / hours, 2) if hours > 0 else 0.0
+
+        return {
+            "total": total,
+            "aggregated": aggregated,
+            "remaining": remaining,
+            "percent": percent,
+            "rate_per_hour": rate,
+        }
