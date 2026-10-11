@@ -12,6 +12,7 @@ from src.data.repositories.work_center_repository import WorkCenterRepository
 from src.domain.services.batch_service import BatchService
 from src.storage.minio_service import MinIOService
 from src.utils.excel_generator import excel_generator
+from src.utils.pdf_generator import pdf_generator
 
 
 async def _load_batch(batch_id: int) -> Tuple[Batch | None, Dict | None]:
@@ -25,23 +26,27 @@ async def _load_batch(batch_id: int) -> Tuple[Batch | None, Dict | None]:
 
 
 @celery_app.task(bind=True, max_retries=3)
-def generate_batch_report(self, batch_id: int, format: str = "excel", user_email: str | None = None) -> dict:
+def generate_batch_report(self, batch_id: int, _format: str = "excel", user_email: str | None = None) -> dict:
     try:
         batch, stats = asyncio.run(_load_batch(batch_id))
     except Exception as exc:
         raise self.retry(exc=exc, countdown=3)
     if batch is None:
        return {"success": False, "error": "Batch not found"}
-
     stamp = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
-    file_name = f"batch_{batch.batch_number}_{batch.batch_date}_{stamp}.xlsx"
+    extension = "xlsx" if _format == "excel" else "pdf"
+    file_name = f"batch_{batch.batch_number}_{batch.batch_date}_{stamp}.{extension}"
 
     expires_at = datetime.now(timezone.utc) + timedelta(days=7)
 
     with tempfile.TemporaryDirectory() as tmp:
         file_path = os.path.join(tmp, file_name)
-
-        excel_generator(batch, stats, file_path)
+        if _format == "excel":
+            excel_generator(batch, stats, file_path)
+        elif _format == "pdf":
+            pdf_generator(batch, stats, file_path)
+        else:
+            return {"success": False, "error": "unsupported file format"}
         size = os.path.getsize(file_path)
         service = MinIOService()
         url = service.upload_file(bucket="reports", file_path=file_path, object_name=file_name,)

@@ -1,15 +1,7 @@
-from datetime import datetime
-
 from openpyxl import Workbook
 
 from src.data.models import Batch
-
-
-def _excel_date(dt: datetime | None) -> datetime | None:
-    if dt is None:
-        return None
-    return dt.astimezone().replace(tzinfo=None)
-
+from src.utils.datetime_utils import report_date
 
 def excel_generator(batch: Batch, stats: dict, file_path: str) -> None:
     wb = Workbook()
@@ -24,15 +16,15 @@ def excel_generator(batch: Batch, stats: dict, file_path: str) -> None:
     ws.append(["Смена", batch.shift])
     ws.append(["Бригада", batch.team])
     ws.append(["Номенклатура", batch.nomenclature])
-    ws.append(["Начало смены", _excel_date(batch.shift_start)])
-    ws.append(["Окончание смены",  _excel_date(batch.shift_end)])
+    ws.append(["Начало смены", report_date(batch.shift_start)])
+    ws.append(["Окончание смены",  report_date(batch.shift_end)])
     ws2.append(["ID", "Уникальный код", "Агрегирована", "Дата агрегации"])
     for product in batch.products:
         ws2.append([
             product.id,
             product.unique_code,
             'Да' if product.is_aggregated else 'Нет',
-            _excel_date(product.aggregated_at) if product.aggregated_at else '-'
+            report_date(product.aggregated_at) if product.aggregated_at else '-'
         ])
     ws3.append(["Всего продукции", stats["total"]])
     ws3.append(["Агрегировано", stats["aggregated"]])
