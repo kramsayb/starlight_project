@@ -2540,6 +2540,18 @@ files = [
 cli = ["click (>=5.0)"]
 
 [[package]]
+name = "python-multipart"
+version = "0.0.32"
+description = "A streaming multipart parser for Python"
+optional = false
+python-versions = ">=3.10"
+groups = ["main"]
+files = [
+    {file = "python_multipart-0.0.32-py3-none-any.whl", hash = "sha256:ff6d3f776f16878c894e52e107296ffc890e913c611b1a4ec6c44e2821fe2e23"},
+    {file = "python_multipart-0.0.32.tar.gz", hash = "sha256:be54b7f3fa167bb83e4fcd936b887b708f4e57fe75911c02aebf53efaf8d938e"},
+]
+
+[[package]]
 name = "pytokens"
 version = "0.4.1"
 description = "A Fast, spec compliant Python 3.14+ tokenizer that runs on older Pythons."
@@ -3321,4 +3333,4 @@ files = [
 [metadata]
 lock-version = "2.1"
 python-versions = "^3.11"
-content-hash = "66dc19c6eec38cf21eaf652d2351c4c5670a9f63f801edfd37ed62b204b9063d"
+content-hash = "3af1308958d42be4d80bdc6f12fc420399e48bf7fc7eef7ac80c65f326a8dc56"
