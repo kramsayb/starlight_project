@@ -1,6 +1,9 @@
-from datetime import date
+import os
+from datetime import date, datetime, timezone
+import asyncio
+import tempfile
 
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, UploadFile
 
 from src.api.v1.schemas.batch import BatchRead, BatchCreate, BatchUpdate, ReportRequest
 from src.api.v1.schemas.task import TaskAccepted, ReportTaskAccepted
@@ -9,8 +12,10 @@ from src.domain.exceptions import BatchAlreadyExistsError
 from src.domain.services.batch_service import BatchService
 from src.domain.services.product_service import ProductService
 from src.api.v1.schemas.product import AggregateRequest, AggregateResult
+from src.storage.minio_service import MinIOService
 from src.tasks.aggregation import aggregate_products_batch
 from src.tasks.reports import generate_batch_report
+from src.tasks.imports import import_batches_from_file
 
 router = APIRouter(prefix="/batches", tags=["batches"])
 
@@ -110,4 +115,34 @@ async def report_batches(
     return {
         "task_id": task.id,
         "status": "PENDING",
+    }
+
+
+def _upload_import_file(content: bytes, ext: str) -> str:
+    stamp = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
+    object_name = f"batches_{stamp}{ext}"
+    with tempfile.TemporaryDirectory() as tmp:
+        file_path = os.path.join(tmp, object_name)
+        with open(file_path, "wb") as f:
+            f.write(content)
+        MinIOService().upload_file("imports", file_path, object_name)
+    return object_name
+
+
+@router.post("/import", response_model=TaskAccepted, status_code=202)
+async def import_batches(
+        file: UploadFile,
+):
+    allowed_extensions = {".xlsx", ".csv"}
+    ext = os.path.splitext(file.filename or "")[1].lower()
+    if ext not in allowed_extensions:
+        raise HTTPException(status_code=400, detail="Unsupported file type")
+
+    content = await file.read()
+    object_name = await asyncio.to_thread(_upload_import_file, content, ext)
+    task = import_batches_from_file.delay(object_name)
+    return {
+        "task_id": task.id,
+        "status": "PENDING",
+        "message": "File uploaded, import started"
     }

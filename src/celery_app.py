@@ -10,5 +10,6 @@ celery_app = Celery(
     include=[
         "src.tasks.aggregation",
         "src.tasks.reports",
+        "src.tasks.imports",
     ]
 )
