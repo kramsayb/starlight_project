@@ -16,3 +16,7 @@ class TaskStatus(BaseModel):
 class ReportTaskAccepted(BaseModel):
     task_id: str
     status: str
+
+
+class ExportTaskAccepted(BaseModel):
+    task_id: str

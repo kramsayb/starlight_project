@@ -1,4 +1,4 @@
-from typing import Sequence
+from typing import Sequence, List
 
 from datetime import datetime, timezone, date
 
@@ -102,3 +102,13 @@ class BatchService:
             "percent": percent,
             "rate_per_hour": rate,
         }
+
+    async def get_for_export(self,
+            is_closed: bool | None = None,
+            date_from: date | None = None,
+            date_to: date | None = None,
+    ) -> List[Batch]:
+        return await self.repository.get_for_export(
+            is_closed=is_closed,
+            date_from=date_from,
+            date_to=date_to,)

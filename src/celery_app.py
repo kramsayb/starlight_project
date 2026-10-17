@@ -11,5 +11,6 @@ celery_app = Celery(
         "src.tasks.aggregation",
         "src.tasks.reports",
         "src.tasks.imports",
+        "src.tasks.exports",
     ]
 )

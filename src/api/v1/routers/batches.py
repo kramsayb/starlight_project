@@ -5,8 +5,8 @@ import tempfile
 
 from fastapi import APIRouter, Depends, HTTPException, Query, UploadFile
 
-from src.api.v1.schemas.batch import BatchRead, BatchCreate, BatchUpdate, ReportRequest
-from src.api.v1.schemas.task import TaskAccepted, ReportTaskAccepted
+from src.api.v1.schemas.batch import BatchRead, BatchCreate, BatchUpdate, ReportRequest, ExportRequest
+from src.api.v1.schemas.task import TaskAccepted, ReportTaskAccepted, ExportTaskAccepted
 from src.core.dependencies import get_batch_service, get_product_service
 from src.domain.exceptions import BatchAlreadyExistsError
 from src.domain.services.batch_service import BatchService
@@ -14,6 +14,7 @@ from src.domain.services.product_service import ProductService
 from src.api.v1.schemas.product import AggregateRequest, AggregateResult
 from src.storage.minio_service import MinIOService
 from src.tasks.aggregation import aggregate_products_batch
+from src.tasks.exports import export_batches_to_file
 from src.tasks.reports import generate_batch_report
 from src.tasks.imports import import_batches_from_file
 
@@ -146,3 +147,12 @@ async def import_batches(
         "status": "PENDING",
         "message": "File uploaded, import started"
     }
+
+
+@router.post("/export", response_model=ExportTaskAccepted, status_code=202)
+async def export_batches(
+        data: ExportRequest,
+):
+    filters = data.filters.model_dump(mode="json")
+    task = export_batches_to_file.delay(filters, data.format)
+    return {"task_id": task.id,}

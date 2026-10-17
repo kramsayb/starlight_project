@@ -54,3 +54,14 @@ class BatchCreate(BaseModel):
 class ReportRequest(BaseModel):
     format: Literal["excel", "pdf"] = "excel"
     email: EmailStr | None = None
+
+
+class ExportFilters(BaseModel):
+    is_closed: bool | None = None
+    date_from: date | None = None
+    date_to: date | None = None
+
+
+class ExportRequest(BaseModel):
+    format: Literal["excel", "csv"] = "excel"
+    filters: ExportFilters = Field(default_factory=ExportFilters)

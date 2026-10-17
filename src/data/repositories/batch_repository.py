@@ -1,5 +1,5 @@
 from datetime import date
-from typing import Sequence
+from typing import Sequence, List
 
 from sqlalchemy import select, func
 from sqlalchemy.orm import selectinload
@@ -47,6 +47,29 @@ class BatchRepository(BaseRepository[Batch]):
 
         stmt = stmt.order_by(Batch.id)
         stmt = stmt.offset(offset).limit(limit)
+        result = await self.session.execute(stmt)
+        return list(result.scalars().all())
+
+    async def get_for_export(
+            self,
+            is_closed: bool | None = None,
+            date_from: date | None = None,
+            date_to: date | None = None,
+    ) -> List[Batch]:
+        stmt = select(Batch).options(selectinload(Batch.work_center))
+
+        conditions = []
+
+        if is_closed is not None:
+            conditions.append(Batch.is_closed == is_closed)
+        if date_from is not None:
+            conditions.append(Batch.batch_date >= date_from)
+        if date_to is not None:
+            conditions.append(Batch.batch_date <= date_to)
+        if conditions:
+            stmt = stmt.where(*conditions)
+
+        stmt = stmt.order_by(Batch.id)
         result = await self.session.execute(stmt)
         return list(result.scalars().all())
 
