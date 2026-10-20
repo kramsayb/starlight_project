@@ -112,3 +112,6 @@ class BatchService:
             is_closed=is_closed,
             date_from=date_from,
             date_to=date_to,)
+
+    async def close_expired(self) -> int:
+        return await self.repository.close_expired()

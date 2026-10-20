@@ -1,7 +1,7 @@
 from datetime import date
 from typing import Sequence, List
 
-from sqlalchemy import select, func
+from sqlalchemy import select, func, update
 from sqlalchemy.orm import selectinload
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -87,3 +87,11 @@ class BatchRepository(BaseRepository[Batch]):
         total, aggregated = result.one()
         return total, aggregated
 
+    async def close_expired(self) -> int:
+        stmt = (
+            update(Batch)
+            .where(Batch.is_closed.is_(False), Batch.shift_end < func.now())
+            .values(is_closed=True, closed_at=func.now())
+        )
+        result = await self.session.execute(stmt)
+        return result.rowcount
